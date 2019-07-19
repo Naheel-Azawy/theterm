@@ -1,0 +1,16 @@
+* THE TERM
+  A wrapper script that gives terminals super powers
+** Like?
+   - Start from the current directory of the focused window
+   - All terminals start in a tmux session
+** Why tmux?
+   - Reduce garbage code on the terminal emulator
+   - Scrollable, searchable, and all kinds of magic
+   - Unkillable
+   - Go search for tmux if you don't know...
+** Installation
+   #+begin_src shell 
+  sudo make install
+   #+end_src
+** License
+   GPL3

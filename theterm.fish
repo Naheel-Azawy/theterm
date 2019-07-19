@@ -1,0 +1,8 @@
+complete -c theterm -s e -l command           -d 'Execute the given COMMANDS in arguments'
+complete -c theterm      -l tmux              -d 'Starts a tmux session running the COMMANDS'
+complete -c theterm      -l tmux-ignore       -d 'Ignore the TMUXSESSION'
+complete -c theterm      -l tmux-unignore     -d 'Unignore the TMUXSESSION'
+complete -c theterm      -l tmux-unignore-all -d 'Unignore all tmux sessions'
+complete -c theterm      -l xpwd              -d 'Print working directory based on the X window'
+complete -c theterm      -l tmux-session      -d 'Print tmux session based on the X window'
+complete -c theterm -s h -l help              -d 'Show this help'
