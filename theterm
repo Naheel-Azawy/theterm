@@ -119,7 +119,11 @@ tmuxquick() {
 
 # Start THE terminal
 starterm() {
-    cd "$(xpwd)" ||:
+    if [ "$1" = '--nocd' ]; then
+        shift
+    else
+        cd "$(xpwd)" ||:
+    fi
     if [ "$TERMINAL" = '' ]; then
         if   command -v st    >/dev/null; then TERMINAL=st
         elif command -v urxvt >/dev/null; then TERMINAL=urxvt
@@ -127,7 +131,7 @@ starterm() {
         else echo 'No supported terminal found' && exit 1
         fi
     fi
-    exec "$TERMINAL" -e "$BINPATH" --tmux "$@"
+    exec "$TERMINAL" $TARGS -e "$BINPATH" --tmux "$@"
 }
 
 # Ignore the current tmux session in the x window
@@ -162,6 +166,7 @@ tmuxunignoreall() {
 help() {
     echo "usage: $BINAME [OPTION]... [COMMANDS]
   -e, --command=COMMANDS        Execute the given COMMANDS in arguments
+  --nocd                        Run without changing directory
   --tmux=COMMANDS               Starts a tmux session running the COMMANDS
   --tmux-ignore=TMUXSESSION     Ignore the TMUXSESSION
   --tmux-unignore=TMUXSESSION   Unignore the TMUXSESSION
@@ -181,6 +186,8 @@ main() {
         --tmux-unignore)     shift && tmuxunignore    "$@";;
         --tmux-unignore-all)          tmuxunignoreall     ;;
         --command|-e)        shift && starterm        "$@";;
+        --nocd)              shift && starterm --nocd "$@";;
+        -a)  TARGS="$2" && shift 2 && starterm        "$@";;
         --help|-h)                    help                ;;
         *)                            starterm        "$@";;
     esac

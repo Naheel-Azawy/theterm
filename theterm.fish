@@ -1,4 +1,5 @@
 complete -c theterm -s e -l command           -d 'Execute the given COMMANDS in arguments'
+complete -c theterm      -l nocd              -d 'Run without changing directory'
 complete -c theterm      -l tmux              -d 'Starts a tmux session running the COMMANDS'
 complete -c theterm      -l tmux-ignore       -d 'Ignore the TMUXSESSION'
 complete -c theterm      -l tmux-unignore     -d 'Unignore the TMUXSESSION'
