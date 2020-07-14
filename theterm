@@ -76,27 +76,35 @@ xpwd() {
     PID=$(xprop -id "$ID" | grep -m 1 PID | cut -d " " -f 3)
 
     if [ -n "$PID" ]; then
-        # Get tmux PID if any
-        PID=$(getgoodpid "$PID")
 
-        # Get the tmux client connected session PID
-        TMUXC=$(tmux list-clients -F '#{client_pid} #{session_name}' | grep "$PID")
-        [ "$TMUXC" != '' ] && {
-            # Get tmux session
-            TMUXS=$(echo "$TMUXC" | awk '{print $2}')
-            # if only tmux session needed
-            [ "$1" = '--tmux-session' ] && echo "$TMUXS" && exit
-            # PID running on the tmux session
-            PID=$(tmux list-sessions -F "#{?#{==:#{session_name},$TMUXS},aaa,nnn} #{pane_pid}" | grep aaa | awk '{print $2}')
-        }
+        # is an emacs instance
+        if ps -p "$PID" -o command | grep emacs -q; then
 
-        # Get a good PID
-        PID=$(getgoodpid "$PID")
+            CWD=$(emacsclient --no-wait --eval '(buffer-file-name (switch-to-buffer (other-buffer (current-buffer) 1))))' |
+                      cut -d '"' -f2)
+            CWD=$(dirname "$CWD")
 
-        # If we find the working directory, run the command in that directory
-        if [ -e "/proc/$PID/cwd" ]; then
-            CWD=$(readlink "/proc/$PID/cwd")
+        else
+
+            PID=$(getgoodpid "$PID")
+            # Get tmux PID if any
+            # Get the tmux client connected session PID
+            TMUXC=$(tmux list-clients -F '#{client_pid} #{session_name}' | grep "$PID")
+            [ "$TMUXC" != '' ] && {
+                # Get tmux session
+                TMUXS=$(echo "$TMUXC" | awk '{print $2}')
+                # if only tmux session needed
+                [ "$1" = '--tmux-session' ] && echo "$TMUXS" && exit
+                # PID running on the tmux session
+                PID=$(tmux list-sessions -F "#{?#{==:#{session_name},$TMUXS},aaa,nnn} #{pane_pid}" | grep aaa | awk '{print $2}')
+            }
+            PID=$(getgoodpid "$PID")
+            # If we find the working directory, run the command in that directory
+            if [ -e "/proc/$PID/cwd" ]; then
+                CWD=$(readlink "/proc/$PID/cwd")
+            fi
         fi
+
     fi
 
     echo "$CWD"
