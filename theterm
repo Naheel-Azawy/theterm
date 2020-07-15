@@ -94,7 +94,7 @@ xpwd() {
                 # Get tmux session
                 TMUXS=$(echo "$TMUXC" | awk '{print $2}')
                 # if only tmux session needed
-                [ "$1" = '--tmux-session' ] && echo "$TMUXS" && exit
+                [ "$1" = '--tmux-session' ] && echo "$TMUXS" && return
                 # PID running on the tmux session
                 PID=$(tmux list-sessions -F "#{?#{==:#{session_name},$TMUXS},aaa,nnn} #{pane_pid}" | grep aaa | awk '{print $2}')
             }
@@ -107,12 +107,18 @@ xpwd() {
 
     fi
 
+    [ "$1" = '--good-pid' ] && echo "$PID" && return
     echo "$CWD"
 }
 
 # Get the current tmux session based on the focused X window
 tmuxsession() {
     xpwd --tmux-session
+}
+
+# Output a good PID the represents whats actually focused on the screen
+good_pid() {
+    xpwd --good-pid
 }
 
 # Start a tmux session or attach to deattached session if any
@@ -145,7 +151,7 @@ starterm() {
         if   command -v st    >/dev/null; then TERMINAL=st
         elif command -v urxvt >/dev/null; then TERMINAL=urxvt
         elif command -v xterm >/dev/null; then TERMINAL=xterm
-        else echo 'No supported terminal found' && exit 1
+        else echo 'No supported terminal found' && return 1
         fi
     fi
     if [ "$TS" ]; then
@@ -160,7 +166,7 @@ tmuxignore() {
     S="$1"
     [ "$S" = '' ] && S=$(tmuxsession)
     [ "$S" = '' ] && return
-    echo "$S" | grep -q 'ignored' && exit # only if not already ignored
+    echo "$S" | grep -q 'ignored' && return # only if not already ignored
     tmux rename-session -t "$S" "ignored-$S"
     echo "ignored-$S"
 }
@@ -204,6 +210,7 @@ main() {
     case "$1" in
         --xpwd)                         xpwd                ;;
         --tmux-session)                 tmuxsession         ;;
+        --good-pid)                     good_pid            ;;
         --tmux)              shift   && tmuxquick       "$@";;
         --tmuxs)  TS="$2" && shift 2 && tmuxquick       "$@";;
         --tmux-ignore)       shift   && tmuxignore      "$@";;
