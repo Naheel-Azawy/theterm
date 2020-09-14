@@ -72,8 +72,28 @@ xpwd() {
     # Get window ID
     ID=$(xdotool getactivewindow)
 
+    # Window details
+    DET=$(xprop -id "$ID")
+
     # Get PID of process whose window this is
-    PID=$(xprop -id "$ID" | grep -m 1 PID | cut -d " " -f 3)
+    PID=$(echo "$DET" | grep -m 1 PID | cut -d " " -f 3)
+
+    # Window class name
+    CLASS=$(echo "$DET" | grep -m 1 WM_CLASS | sed -En 's/.+"(.+)".*/\1/p')
+
+    # Class specific special cases
+    case "$CLASS" in
+        Evince)
+            # The PDF file must be under on the the process's file descriptors
+            FDS="/proc/$PID/fd"
+            for f in $FDS/*; do
+                l="$(readlink "$f")"
+                if echo "$l" | grep -q '\.pdf$'; then
+                    dirname "$l" && return
+                fi
+            done
+        ;;
+    esac
 
     if [ -n "$PID" ]; then
 
