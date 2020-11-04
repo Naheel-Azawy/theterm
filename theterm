@@ -92,7 +92,12 @@ xpwd() {
                     dirname "$l" && return
                 fi
             done
-        ;;
+            ;;
+        jetbrains-studio)
+            echo "$DET" |
+                sed -En 's@_NET_WM_NAME.+\".*\[(.+)\].*\"@\1@p' |
+                sed "s@~@$HOME@" && return
+            ;;
     esac
 
     if [ -n "$PID" ]; then
