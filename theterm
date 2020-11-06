@@ -93,10 +93,20 @@ xpwd() {
                 fi
             done
             ;;
+
         jetbrains-studio)
-            echo "$DET" |
-                sed -En 's@_NET_WM_NAME.+\".*\[(.+)\].*\"@\1@p' |
-                sed "s@~@$HOME@" && return
+            P=$(echo "$DET" |
+                    sed -En 's@_NET_WM_NAME.+\".*\[(.+)\].*\[.*\"@\1@p' |
+                    sed "s@~@$HOME@")
+            if ! [ -d "$P" ]; then
+                P=$(echo "$DET" |
+                        sed -En 's@_NET_WM_NAME.+\".*\[(.+)\].*\"@\1@p' |
+                        sed "s@~@$HOME@")
+            fi
+            if [ -d "$P" ]; then
+                echo "$P"
+                return
+            fi
             ;;
     esac
 
