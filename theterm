@@ -89,7 +89,9 @@ xpwd() {
             for f in $FDS/*; do
                 l="$(readlink "$f")"
                 if echo "$l" | grep -q '\.pdf$'; then
-                    dirname "$l" && return
+                    CWD=$(dirname "$l")
+                    PID=''
+                    break
                 fi
             done
             ;;
@@ -104,8 +106,8 @@ xpwd() {
                         sed "s@~@$HOME@")
             fi
             if [ -d "$P" ]; then
-                echo "$P"
-                return
+                CWD="$P"
+                PID=''
             fi
             ;;
     esac
