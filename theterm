@@ -259,7 +259,7 @@ windowkill() {
                     xdotool key Control+c
                     xdotool type 'exit 0'
                     xdotool key Return ;;
-                less*|lf*|ncmpcpp*|vis*)
+                less*|lf*|ncmpcpp*|vis*|gotop*)
                     xdotool key q ;;
                 nano*)
                     xdotool key Control+x ;;
@@ -267,22 +267,13 @@ windowkill() {
                     xdotool key Control+x Control+c ;;
                 alsamixer*)
                     xdotool key Escape ;;
-                watch*|*read*)
+                watch*|*read*|python*)
                     xdotool key Control+c ;;
                 *)
                     notify-send "Couldn't kill '$CMD'"
                     return 1 ;;
             esac ;;
     esac
-
-    # OLD_PID="$PID"
-    # sleep .3
-    # PID=$(xpwd --good-pid)
-    # if [ "$OLD_PID" = "$PID" ]; then
-    #     echo "Failed closing window..."
-    #     echo "$INFO"
-    #     exec xdotool windowkill "$ID"
-    # fi
 }
 
 help() {
