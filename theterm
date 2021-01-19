@@ -60,8 +60,8 @@ getgoodpid() {
         awk -F'---' '{print $NF}' |
         # Get rid of garbage on the right
         awk -F')' '{print $1}' |
-        # The PID
-        sed -En 's/.+\(([0-9]+).*/\1/p'
+        # The command and PID, to be evaled
+        sed -En 's/(.+)\(([0-9]+).*/CMD="\1";PID=\2/p'
 }
 
 # Get the current working directory based on the focused X window
@@ -123,7 +123,7 @@ xpwd() {
 
         else
 
-            PID=$(getgoodpid "$PID")
+            eval "$(getgoodpid "$PID")"
             # Get tmux PID if any
             # Get the tmux client connected session PID
             TMUXC=$(tmux list-clients -F '#{client_pid} #{session_name}' | grep "$PID")
@@ -135,7 +135,7 @@ xpwd() {
                 # PID running on the tmux session
                 PID=$(tmux list-sessions -F "#{?#{==:#{session_name},$TMUXS},aaa,nnn} #{pane_pid}" | grep aaa | awk '{print $2}')
             }
-            PID=$(getgoodpid "$PID")
+            eval "$(getgoodpid "$PID")"
             # If we find the working directory, run the command in that directory
             if [ -e "/proc/$PID/cwd" ]; then
                 CWD=$(readlink "/proc/$PID/cwd")
@@ -243,36 +243,39 @@ tmuxunignoreall() {
 }
 
 # Kill a terminal X window
+# exit codes:
+#  1: not a tmux session window
+#  2: is tmux session but don't know how to exit
 windowkill() {
     # Send keys base on the currnet command.
-    # If the pid doesn't change, close the usual way.
 
-    sleep .1 # the below command already takes some time
-    INFO=$(xpwd --info)
+    TITLE=$(xdotool getactivewindow getwindowname)
+    INFO=$(echo "$TITLE" |
+               sed -En 's/.+ - tmux ([0-9]+):([0-9]+)/SESSION=\1;PID=\2/p')
+    [ "$INFO" ] || return 1
     eval "$INFO"
+    eval "$(getgoodpid "$PID")"
 
-    case "$TMUX_SESSION" in
-        ignored-*) exec xdotool windowkill "$ID" ;;
+    # echo "$CMD $SESSION $PID"
+
+    case "$CMD" in
+        fish|zsh|xonsh|bash|dash|sh)
+            tmux send-keys -t "$SESSION" C-c
+            sleep .1
+            tmux send-keys -t "$SESSION" 'exit 0' ENTER 2>/dev/null ||: ;;
+        less|lf|ncmpcpp|mpd-notificatio|vis|gotop)
+            tmux send-keys -t "$SESSION" 'q' ;;
+        nano)
+            tmux send-keys -t "$SESSION" C-x ;;
+        emacs*)
+            tmux send-keys -t "$SESSION" C-x C-c ;;
+        alsamixer)
+            tmux send-keys -t "$SESSION" ESCAPE ;;
+        watch|python)
+            tmux send-keys -t "$SESSION" C-c ;;
         *)
-            case "$CMD" in
-                -fish|fish|zsh|xonsh|bash|dash|sh)
-                    xdotool key Control+c
-                    xdotool type 'exit 0'
-                    xdotool key Return ;;
-                less*|lf*|ncmpcpp*|vis*|gotop*)
-                    xdotool key q ;;
-                nano*)
-                    xdotool key Control+x ;;
-                emacs*)
-                    xdotool key Control+x Control+c ;;
-                alsamixer*)
-                    xdotool key Escape ;;
-                watch*|*read*|python*)
-                    xdotool key Control+c ;;
-                *)
-                    notify-send "Couldn't kill '$CMD'"
-                    return 1 ;;
-            esac ;;
+            notify-send "Couldn't kill '$CMD'"
+            return 2 ;;
     esac
 }
 
