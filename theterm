@@ -48,7 +48,7 @@ BINPATH=$(realpath "$0")
 #                                 |    |-sh(6431)
 #                 "Get this" --- /     |-{lf}(6423)
 #                                      |   ...
-getgoodpid() {
+getgoodpid_from_tree() {
     PID="$1"
     [ "$TREE_DIF" = '' ] && TREE_DIF=0
     pstree -lpAT "$PID" |
@@ -62,6 +62,17 @@ getgoodpid() {
         awk -F')' '{print $1}' |
         # The command and PID, to be evaled
         sed -En 's/(.+)\(([0-9]+).*/CMD="\1";PID=\2/p'
+}
+
+# Get the PID of the last process controlling stdout.
+# However this is too expensive. Maybe try `fuser -vm`.
+# But that lists all processes controlling /dev/pts.
+# For now we'll stick to lsof for convenience. Might
+# change this in the near future if turners out to be
+# too too slow.
+getgoodpid_from_of() {
+    lsof "/proc/$PID/fd/1" | tail -n 1 |
+        awk '{print "CMD="$1"; PID="$2}'
 }
 
 # Get the current working directory based on the focused X window
@@ -123,7 +134,7 @@ xpwd() {
 
         else
 
-            eval "$(getgoodpid "$PID")"
+            eval "$(getgoodpid_from_tree "$PID")"
             # Get tmux PID if any
             # Get the tmux client connected session PID
             TMUXC=$(tmux list-clients -F '#{client_pid} #{session_name}' | grep "$PID")
@@ -135,7 +146,7 @@ xpwd() {
                 # PID running on the tmux session
                 PID=$(tmux list-sessions -F "#{?#{==:#{session_name},$TMUXS},aaa,nnn} #{pane_pid}" | grep aaa | awk '{print $2}')
             }
-            eval "$(getgoodpid "$PID")"
+            eval "$(getgoodpid_from_of "$PID")"
             # If we find the working directory, run the command in that directory
             if [ -e "/proc/$PID/cwd" ]; then
                 CWD=$(readlink "/proc/$PID/cwd")
@@ -148,7 +159,7 @@ xpwd() {
         --good-pid)
             echo "$PID" ;;
         --info)
-            CMD=$(ps -p "$PID" -o command -h)
+            [ "$CMD" ] || CMD=$(ps -p "$PID" -o command -h)
             echo "PID=$PID"
             echo "CMD='$CMD'"
             echo "CWD='$CWD'"
