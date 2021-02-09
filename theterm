@@ -265,7 +265,7 @@ windowkill() {
                sed -En 's/.+ - tmux ([0-9]+):([0-9]+)/SESSION=\1;PID=\2/p')
     [ "$INFO" ] || return 1
     eval "$INFO"
-    eval "$(getgoodpid "$PID")"
+    eval "$(getgoodpid_from_of "$PID")"
 
     # echo "$CMD $SESSION $PID"
 
