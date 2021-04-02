@@ -210,17 +210,17 @@ starterm() {
     else
         cd "$(xpwd)" ||:
     fi
-    if [ "$TERMINAL" = '' ]; then
-        if   command -v st    >/dev/null; then TERMINAL=st
-        elif command -v urxvt >/dev/null; then TERMINAL=urxvt
-        elif command -v xterm >/dev/null; then TERMINAL=xterm
+    if [ ! "$THETERM_TERM" ]; then
+        if   command -v st    >/dev/null; then THETERM_TERM=st
+        elif command -v urxvt >/dev/null; then THETERM_TERM=urxvt
+        elif command -v xterm >/dev/null; then THETERM_TERM=xterm
         else echo 'No supported terminal found' && return 1
         fi
     fi
     if [ "$TS" ]; then
-        exec "$TERMINAL" $TARGS -e "$BINPATH" --tmuxs "$TS" "$@"
+        exec "$THETERM_TERM" $TARGS -e "$BINPATH" --tmuxs "$TS" "$@"
     else
-        exec "$TERMINAL" $TARGS -e "$BINPATH" --tmux "$@"
+        exec "$THETERM_TERM" $TARGS -e "$BINPATH" --tmux "$@"
     fi
 }
 
