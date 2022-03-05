@@ -71,9 +71,19 @@ getgoodpid_from_tree() {
 # change this in the near future if turners out to be
 # too too slow.
 getgoodpid_from_of() {
-    lsof "/proc/$PID/fd/1" | tail -n 1 |
-        awk '{print "CMD="$1"; PID="$2}'
+    # lsof is too too slow. The dead code below
+    # is left for future reference. TODO: cleanup
+    getgoodpid_from_tree
+    # lsof "/proc/$PID/fd/1" | tail -n 1 |
+    #     awk '{print "CMD="$1"; PID="$2}'
 }
+
+# TODO: try ls -i then find?
+# e.g.:
+# lsof /proc/470704/fd/1
+# TO:
+# ls -il /proc/470704/fd/1
+# find /proc/*/fd/ -inum 2038334 2>/dev/null
 
 # Get the current working directory based on the focused X window
 xpwd() {
