@@ -102,6 +102,9 @@ xpwd() {
     # Window class name
     CLASS=$(echo "$DET" | grep -m 1 WM_CLASS | sed -En 's/.+"(.+)".*/\1/p')
 
+    # At which level CWD was found
+    XPWD_LEVEL=0
+
     # Class specific special cases
     case "$CLASS" in
         Evince)
@@ -112,6 +115,7 @@ xpwd() {
                 if echo "$l" | grep -q '\.pdf$'; then
                     CWD=$(dirname "$l")
                     PID=''
+                    XPWD_LEVEL=1
                     break
                 fi
             done
@@ -129,6 +133,7 @@ xpwd() {
             if [ -d "$P" ]; then
                 CWD="$P"
                 PID=''
+                XPWD_LEVEL=1
             fi
             ;;
     esac
@@ -141,10 +146,12 @@ xpwd() {
             CWD=$(emacsclient --no-wait --eval '(buffer-file-name (switch-to-buffer (other-buffer (current-buffer) 1))))' |
                       cut -d '"' -f2)
             CWD=$(dirname "$CWD")
+            XPWD_LEVEL=2
 
         else
 
             eval "$(getgoodpid_from_tree "$PID")"
+            XPWD_LEVEL=3
             # Get tmux PID if any
             # Get the tmux client connected session PID
             TMUXC=$(tmux list-clients -F '#{client_pid} #{session_name}' | grep "$PID")
@@ -157,9 +164,11 @@ xpwd() {
                 PID=$(tmux list-sessions -F "#{?#{==:#{session_name},$TMUXS},aaa,nnn} #{pane_pid}" | grep aaa | awk '{print $2}')
             }
             eval "$(getgoodpid_from_of "$PID")"
+            XPWD_LEVEL=4
             # If we find the working directory, run the command in that directory
             if [ -e "/proc/$PID/cwd" ]; then
                 CWD=$(readlink "/proc/$PID/cwd")
+                XPWD_LEVEL=5
             fi
         fi
 
@@ -173,6 +182,7 @@ xpwd() {
             echo "PID=$PID"
             echo "CMD='$CMD'"
             echo "CWD='$CWD'"
+            echo "XPWD_LEVEL=$XPWD_LEVEL"
             echo "TMUX_SESSION='$TMUXS'" ;;
         *)
             echo "$CWD" ;;
