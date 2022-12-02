@@ -48,21 +48,21 @@ BINPATH=$(realpath "$0")
 #                                 |    |-sh(6431)
 #                 "Get this" --- /     |-{lf}(6423)
 #                                      |   ...
-getgoodpid_from_tree() {
-    PID="$1"
-    [ "$TREE_DIF" = '' ] && TREE_DIF=0
-    pstree -lpAT "$PID" |
-        # Ignore subprocesses of this script
-        awk -F"---$BINAME" '{print $1}' |
-        # First line
-        head -n1 |
-        # Left side in the left tree
-        awk -F'---' '{print $NF}' |
-        # Get rid of garbage on the right
-        awk -F')' '{print $1}' |
-        # The command and PID, to be evaled
-        sed -En 's/(.+)\(([0-9]+).*/CMD="\1";PID=\2/p'
-}
+# getgoodpid_from_tree() {
+#     PID="$1"
+#     [ "$TREE_DIF" = '' ] && TREE_DIF=0
+#     pstree -lpAT "$PID" |
+#         # Ignore subprocesses of this script
+#         awk -F"---$BINAME" '{print $1}' |
+#         # First line
+#         head -n1 |
+#         # Left side in the left tree
+#         awk -F'---' '{print $NF}' |
+#         # Get rid of garbage on the right
+#         awk -F')' '{print $1}' |
+#         # The command and PID, to be evaled
+#         sed -En 's/(.+)\(([0-9]+).*/CMD="\1";PID=\2/p'
+# }
 
 # Get the PID of the last process controlling stdout.
 # However this is too expensive. Maybe try `fuser -vm`.
@@ -70,13 +70,25 @@ getgoodpid_from_tree() {
 # For now we'll stick to lsof for convenience. Might
 # change this in the near future if turners out to be
 # too too slow.
-getgoodpid_from_of() {
-    # lsof is too too slow. The dead code below
-    # is left for future reference. TODO: cleanup
-    getgoodpid_from_tree
-    # lsof "/proc/$PID/fd/1" | tail -n 1 |
-    #     awk '{print "CMD="$1"; PID="$2}'
+# getgoodpid_from_of() {
+#     # lsof is too too slow. The dead code below
+#     # is left for future reference. TODO: cleanup
+#     getgoodpid_from_tree
+#     # lsof "/proc/$PID/fd/1" | tail -n 1 |
+#     #     awk '{print "CMD="$1"; PID="$2}'
+# }
+
+getgoodpid_from_tree_new() {
+    pstree -lpAT "$1"                   |
+        head -n1                        |
+        perl -pe 's/(.+?)\-\+\-.+/\1/p' |
+        awk -F'---' '{print $NF}'       |
+        sed -rn 's/(.+)\(([0-9]+)\)/CMD="\1";PID=\2/p'
 }
+
+# TODO: if this interface is better, switch to it later
+getgoodpid_from_tree() { getgoodpid_from_tree_new "$@"; }
+getgoodpid_from_of()   { getgoodpid_from_tree_new "$@"; }
 
 # TODO: try ls -i then find?
 # e.g.:
