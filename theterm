@@ -13,7 +13,7 @@
 #     |  |     |  |____ |  |\  \----.|  |  |  |
 #     |__|     |_______|| _| `._____||__|  |__|
 #
-# Copyright (C) 2019-2021 naheel-azawy
+# Copyright (C) 2019-present naheel-azawy
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -243,7 +243,8 @@ starterm() {
         cd "$(xpwd)" ||:
     fi
     if [ ! "$THETERM_TERM" ]; then
-        if   command -v st    >/dev/null; then THETERM_TERM=st
+        if   command -v gtrm  >/dev/null; then THETERM_TERM=gtrm
+        elif command -v st    >/dev/null; then THETERM_TERM=st
         elif command -v urxvt >/dev/null; then THETERM_TERM=urxvt
         elif command -v xterm >/dev/null; then THETERM_TERM=xterm
         else echo 'No supported terminal found' && return 1
